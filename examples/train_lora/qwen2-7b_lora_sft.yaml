@@ -1,0 +1,51 @@
+### model
+model_name_or_path: Qwen/Qwen2-7B-Instruct
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: all
+
+### dataset
+dataset: identity,gantong
+template: qwen
+cutoff_len: 1024
+max_samples: 1000                # 限制在训练或评估过程中使用的最大样本数量，可以先使用较少的样本快速验证模型的效果，再决定是否进行大规模训练
+overwrite_cache: true
+preprocessing_num_workers: 16   # 用于指定在数据预处理过程中使用的工作线程数
+
+### output
+output_dir: saves/qwen2-7b/lora/sft
+logging_steps: 50
+save_steps: 500
+# max_steps: 1000 ＃ 训练过程中执行的最大步数，每一步（step）通常对应一次梯度更新，即处理一个 batch 的数据，一个 epoch 包含多个 step，例如，如果你的数据集有 2000 个样本，batch size 为 10，那么一个 epoch 包含 200 步（steps）
+plot_loss: true                 # 用于在训练过程中绘制损失函数的变化图
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 1
+learning_rate: 5.0e-5
+num_train_epochs: 20.0           # 完整遍历训练数据集的次数，通常用于希望通过多次遍历数据集来提高模型的泛化能力。max_steps is given, it will override any value given in num_train_epochs
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+# warmup_steps: 10
+# optim: adamw_torch
+# packing: false
+# report_to: none
+bf16: true
+ddp_timeout: 180000000
+loraplus_lr_ratio: 16           # loraplus_lr_ratio 参数用于调整学习率。具体来说，loraplus_lr_ratio: 16 表示 LoRA 层的学习率是基础模型学习率的 16 倍。 这种设置的目的是让 LoRA 层更快地适应新任务，因为这些层通常需要更大的更新步长来有效地学习新特征。通过增加 LoRA 层的学习率，可以加速微调过程，提高模型在特定任务上的性能。
+weight_decay: 0.01              # 设置 weight_decay: 0.01 表示在每次梯度更新时，权重会被衰减 1%。这有助于保持模型的稳定性和性能，特别是在处理复杂任务时，防止过拟合，weight_decay 会在每次更新模型参数时，对权重施加一个惩罚项，使得权重的值不会变得过大，从而提高模型的泛化能力
+max_grad_norm: 1.0              # 帮助模型更稳定地训练，避免出现梯度过大（梯度爆炸）导致的数值不稳定问题
+# load_best_model_at_end: True #需要做eval
+### eval
+# val_size: 0.1                 # 验证集比例
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 40
+# lora
+lora_rank: 32 #LoRA秩，LoRA矩阵的秩大小，越大精度越高，推荐32, 影响Number of trainable parameters
+# lora_alpha: 16
+# lora_dropout: 0
